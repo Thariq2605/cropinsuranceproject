@@ -50,10 +50,12 @@ function capture(){
   let formData = new FormData()
 
   formData.append("file", dataURItoBlob(dataURL), "capture.jpg")
+  if (lat) formData.append("latitude", lat);
+  if (lon) formData.append("longitude", lon);
 
   alert("API CALL START")
 
-  fetch("http://127.0.0.1:9000/analyze", {
+  fetch("http://127.0.0.1:8000/analyze", {
     method: "POST",
     body: formData
   })
@@ -72,15 +74,47 @@ function capture(){
     if(data.ndvi && data.ndvi.nd){
       ndviValue = data.ndvi.nd
     }
-    document.getElementById("result").innerHTML =
-    "<h3>Analysis Result</h3>" +
-    "<br>Status: " + data.status +
-    "<br>Latitude: " + data.latitude +
-    "<br>Longitude: " + data.longitude +
-    "<br>NDVI: " + ndviValue
+    let resultHTML = "<h3>Analysis Result</h3>" +
+    "<br>Status: " + data.status;
+    
+    if (data.reason) {
+        resultHTML += "<br>Reason: " + data.reason;
+    }
+    
+    resultHTML += 
+    "<br>Latitude: " + (data.latitude || "N/A") +
+    "<br>Longitude: " + (data.longitude || "N/A") +
+    "<br>NDVI: " + ndviValue;
+
+    if (data.crop_type) {
+        resultHTML += "<br>Crop: " + data.crop_type + " (" + (data.confidence || 0) + "% confidence)";
+    }
+    if (data.damage_percentage !== undefined) {
+        resultHTML += "<br>Damage: " + data.damage_percentage + "%";
+    }
+    if (data.loss_percentage !== undefined) {
+        resultHTML += "<br>Estimated Loss: " + data.loss_percentage + "%";
+    }
+    if (data.map_url) {
+        resultHTML += "<br><a href='" + data.map_url + "' target='_blank'>View on Map</a>";
+    }
+
+    document.getElementById("result").innerHTML = resultHTML;
   })
   .catch(error => {
     console.log("FETCH ERROR:", error)
+    alert("Error: " + error.message)
   })
 
+}
+
+function dataURItoBlob(dataURI) {
+    let byteString = atob(dataURI.split(',')[1]);
+    let mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], {type: mimeString});
 }
