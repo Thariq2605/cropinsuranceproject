@@ -6,7 +6,7 @@ def get_land_coordinates(farmer_id, survey_number):
     query = """
         SELECT latitude, longitude
         FROM farmer_lands
-        WHERE farmer_id = %s AND survey_number = %s
+        WHERE farmer_id = ? AND survey_number = ?
     """
 
     cursor.execute(query, (farmer_id, survey_number))
@@ -21,7 +21,7 @@ def get_land_coordinates(farmer_id, survey_number):
 
 def insert_image(path):
     cursor = conn.cursor()
-    query = "INSERT INTO fraud_images (image_path) VALUES (%s)"
+    query = "INSERT INTO fraud_images (image_path) VALUES (?)"
     cursor.execute(query, (path,))
     conn.commit()
     cursor.close()
