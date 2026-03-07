@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Select Farm Location</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+</head>
+
+<body>
+
+<h2>Crop Insurance Satellite Verification</h2>
+
+<input type="file" id="imageUpload">
+<button onclick="uploadImage()">Analyze Image</button>
+
+<br><br>
+
+<div id="map" style="height:500px;"></div>
+
+</body>
+
+<h2>Select Farm Location</h2>
+
+<div id="map" style="height:500px;"></div>
+
+<p id="coords"></p>
+
+<script>
+
+var map = L.map('map').setView([11.1271,78.6569],6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map);
+
+map.on('click',function(e){
+
+    var lat = e.latlng.lat
+    var lon = e.latlng.lng
+
+    var marker = L.marker([lat, lon]).addTo(map)
+    marker.bindPopup("Uploaded Image Location").openPopup()
+
+    document.getElementById("coords").innerHTML =
+    "Latitude: "+lat+" Longitude: "+lon
+
+    fetch("http://127.0.0.1:8000/satellite_ndvi_check",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            latitude:lat,
+            longitude:lon
+        })
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        alert("NDVI Value: "+data.ndvi_value.nd)
+    })
+
+})
+
+</script>
+
+function uploadImage(){
+
+    var file = document.getElementById("imageUpload").files[0]
+
+    var formData = new FormData()
+    formData.append("file", file)
+
+    fetch("http://127.0.0.1:8000/analyze",{
+        method:"POST",
+        body:formData
+    })
+    .then(res=>res.json())
+    .then(data=>{
+
+        var lat = data.latitude
+        var lon = data.longitude
+        var ndvi = data.ndvi.nd
+
+        var marker = L.marker([lat, lon]).addTo(map)
+
+        marker.bindPopup(
+            "Image Location<br>NDVI: "+ndvi
+        ).openPopup()
+
+        map.setView([lat, lon], 12)
+
+    })
+
+}
+
+</body>
+</html>
