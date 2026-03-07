@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>NDVI Heatmap</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+</head>
+
+<body>
+
+<h2>Satellite NDVI Heatmap</h2>
+
+<div id="map" style="height:500px;"></div>
+
+<script>
+
+function getParam(name){
+    const url = new URL(window.location.href)
+    return url.searchParams.get(name)
+}
+
+var lat = getParam("lat")
+var lon = getParam("lon")
+var heatmap_url = getParam("heatmap")
+
+var map = L.map('map').setView([lat,lon],15)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map)
+
+if(heatmap_url){
+    L.tileLayer(heatmap_url).addTo(map)
+}
+
+L.marker([lat,lon]).addTo(map)
+.bindPopup("Farm Location")
+.openPopup()
+
+</script>
+
+</body>
+</html>
