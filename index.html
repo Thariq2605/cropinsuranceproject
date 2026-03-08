@@ -17,9 +17,13 @@
 
     <video id="video" width="400" autoplay></video>
 
-    <br><br>
+    <button onclick="capture()">Capture & Analyze (Webcam)</button>
 
-    <button onclick="capture()">Capture & Analyze</button>
+    <br><br>
+    
+    <h3>Or Upload an Image:</h3>
+    <input type="file" id="imageUpload" accept="image/*">
+    <button onclick="uploadAndAnalyze()">Upload & Analyze</button>
 
     <canvas id="canvas" style="display:none"></canvas>
 

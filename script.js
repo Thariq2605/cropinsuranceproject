@@ -133,3 +133,75 @@ function dataURItoBlob(dataURI) {
   }
   return new Blob([ab], { type: mimeString });
 }
+
+// Upload Image + Send to API
+function uploadAndAnalyze() {
+  let fileInput = document.getElementById("imageUpload");
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("Please select an image file first.");
+    return;
+  }
+
+  let file = fileInput.files[0];
+  let formData = new FormData();
+
+  formData.append("file", file);
+  if (lat) formData.append("latitude", lat);
+  if (lon) formData.append("longitude", lon);
+
+  alert("API CALL START FOR UPLOAD");
+
+  // Dynamically resolve backend API using port 8000 so it works on any device
+  const API_BASE = window.location.protocol + "//" + window.location.hostname + ":8000";
+
+  fetch(API_BASE + "/analyze", {
+    method: "POST",
+    body: formData
+  })
+    .then(response => {
+      console.log("RAW RESPONSE:", response);
+      return response.text();
+    })
+    .then(text => {
+
+      console.log("TEXT RESPONSE:", text);
+      let data = JSON.parse(text);
+      alert("API RESPONSE RECEIVED");
+
+      let ndviValue = "N/A";
+
+      if (data.ndvi && data.ndvi.nd) {
+        ndviValue = data.ndvi.nd;
+      }
+      let resultHTML = "<h3>Analysis Result</h3>" +
+        "<br>Status: " + data.status;
+
+      if (data.reason) {
+        resultHTML += "<br>Reason: " + data.reason;
+      }
+
+      resultHTML +=
+        "<br>Latitude: " + (data.latitude || "N/A") +
+        "<br>Longitude: " + (data.longitude || "N/A") +
+        "<br>NDVI: " + ndviValue;
+
+      if (data.crop_type) {
+        resultHTML += "<br>Crop: " + data.crop_type + " (" + (data.confidence || 0) + "% confidence)";
+      }
+      if (data.damage_percentage !== undefined) {
+        resultHTML += "<br>Damage: " + data.damage_percentage + "%";
+      }
+      if (data.loss_percentage !== undefined) {
+        resultHTML += "<br>Estimated Loss: " + data.loss_percentage + "%";
+      }
+      if (data.map_url) {
+        resultHTML += "<br><a href='" + data.map_url + "' target='_blank'>View on Map</a>";
+      }
+
+      document.getElementById("result").innerHTML = resultHTML;
+    })
+    .catch(error => {
+      console.log("FETCH ERROR:", error);
+      alert("Error: " + error.message);
+    });
+}
