@@ -1,99 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Select Farm Location</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
+    <title>Select Farm Location</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        #map { height: 500px; width: 100%; margin-top: 20px; }
+        .container { padding: 20px; }
+    </style>
 </head>
-
 <body>
+    <div class="container">
+        <h2>Crop Insurance Satellite Verification</h2>
+        <input type="file" id="imageUpload">
+        <button onclick="uploadImage()">Analyze Image</button>
+        <p id="coords"></p>
+        <div id="map"></div>
+    </div>
 
-<h2>Crop Insurance Satellite Verification</h2>
+    <script>
+        var map = L.map('map').setView([11.1271, 78.6569], 6);
 
-<input type="file" id="imageUpload">
-<button onclick="uploadImage()">Analyze Image</button>
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
 
-<br><br>
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lon = e.latlng.lng;
 
-<div id="map" style="height:500px;"></div>
+            var marker = L.marker([lat, lon]).addTo(map);
+            marker.bindPopup("Selected Location").openPopup();
 
-</body>
+            document.getElementById("coords").innerHTML = "Latitude: " + lat + " Longitude: " + lon;
 
-<h2>Select Farm Location</h2>
+            // Dynamically resolve backend API using port 8000
+            var API_BASE = window.location.protocol + "//" + window.location.hostname + ":8000";
+            fetch(API_BASE + "/satellite-analysis?lat=" + lat + "&lon=" + lon)
+            .then(res => res.json())
+            .then(data => {
+                alert("NDVI Value: " + (data.ndvi_value ? (data.ndvi_value.nd || JSON.stringify(data.ndvi_value)) : "N/A"));
+            })
+            .catch(err => console.error("Error:", err));
+        });
 
-<div id="map" style="height:500px;"></div>
+        function uploadImage() {
+            var fileInput = document.getElementById("imageUpload");
+            if (!fileInput.files.length) {
+                alert("Please select a file first.");
+                return;
+            }
+            var file = fileInput.files[0];
+            var formData = new FormData();
+            formData.append("file", file);
 
-<p id="coords"></p>
+            // Dynamically resolve backend API using port 8000
+            var API_BASE = window.location.protocol + "//" + window.location.hostname + ":8000";
+            fetch(API_BASE + "/analyze", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.latitude && data.longitude) {
+                    var lat = data.latitude;
+                    var lon = data.longitude;
+                    var ndvi = (data.ndvi && data.ndvi.nd) ? data.ndvi.nd : "N/A";
 
-<script>
-
-var map = L.map('map').setView([11.1271,78.6569],6);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-maxZoom:19
-}).addTo(map);
-
-map.on('click',function(e){
-
-    var lat = e.latlng.lat
-    var lon = e.latlng.lng
-
-    var marker = L.marker([lat, lon]).addTo(map)
-    marker.bindPopup("Uploaded Image Location").openPopup()
-
-    document.getElementById("coords").innerHTML =
-    "Latitude: "+lat+" Longitude: "+lon
-
-    fetch("http://127.0.0.1:8000/satellite_ndvi_check",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            latitude:lat,
-            longitude:lon
-        })
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        alert("NDVI Value: "+data.ndvi_value.nd)
-    })
-
-})
-
-</script>
-
-function uploadImage(){
-
-    var file = document.getElementById("imageUpload").files[0]
-
-    var formData = new FormData()
-    formData.append("file", file)
-
-    fetch("http://127.0.0.1:8000/analyze",{
-        method:"POST",
-        body:formData
-    })
-    .then(res=>res.json())
-    .then(data=>{
-
-        var lat = data.latitude
-        var lon = data.longitude
-        var ndvi = data.ndvi.nd
-
-        var marker = L.marker([lat, lon]).addTo(map)
-
-        marker.bindPopup(
-            "Image Location<br>NDVI: "+ndvi
-        ).openPopup()
-
-        map.setView([lat, lon], 12)
-
-    })
-
-}
-
+                    var marker = L.marker([lat, lon]).addTo(map);
+                    marker.bindPopup("Image Location<br>NDVI: " + ndvi).openPopup();
+                    map.setView([lat, lon], 12);
+                } else {
+                    alert("Analysis complete, but no location found in image.");
+                }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                alert("Analysis failed. See console for details.");
+            });
+        }
+    </script>
 </body>
 </html>

@@ -1,16 +1,28 @@
 import cv2
 import numpy as np
 from PIL import Image
+import os
 
 
 def load_gray(image_path):
-    img = Image.open(image_path).convert("L")
-    return np.array(img)
+    try:
+        if not os.path.exists(image_path):
+            print(f"⚠️ Warning: Image not found at {image_path}")
+            return None
+        img = Image.open(image_path).convert("L")
+        return np.array(img)
+    except Exception as e:
+        print(f"❌ Error loading image {image_path}: {e}")
+        return None
 
 
 def orb_match(img1_path, img2_path, ratio_threshold=0.20):
     img1 = load_gray(img1_path)
     img2 = load_gray(img2_path)
+
+    if img1 is None or img2 is None:
+        print("⚠️ Skipping comparison due to missing or invalid image.")
+        return False, 0, 0
 
     orb = cv2.ORB_create(nfeatures=3000)
 

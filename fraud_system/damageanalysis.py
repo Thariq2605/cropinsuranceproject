@@ -25,7 +25,12 @@ def crop_damage_analysis(image_path):
     return float(round(damage_percentage, 2))
 
 if __name__ == "__main__":
-    image_path = r"C:\Users\moham\Downloads\OIP (2).jpeg"
-    damage = crop_damage_analysis(image_path)
-
-    print("Crop Damage Percentage:", damage, "%")
+    import os
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(BASE_DIR, "uploads", "capture.jpg")
+    
+    if os.path.exists(image_path):
+        damage = crop_damage_analysis(image_path)
+        print("Crop Damage Percentage:", damage, "%")
+    else:
+        print(f"File not found: {image_path}")
