@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import shutil
 import os
+import uuid
 
 from fraud_system.fraud_db import get_land_coordinates
 from fraud_system.utils import calculate_distance, get_image_location, convert_to_degrees
@@ -23,7 +24,7 @@ app = FastAPI(title="crop Insurance AI API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     )
@@ -75,7 +76,12 @@ async def analyze_crop(
     latitude: float = Form(None),
     longitude: float = Form(None)
 ):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    # Generate a unique filename using UUID to prevent collisions
+    ext = os.path.splitext(file.filename)[1]
+    if not ext:
+        ext = ".jpg" # Default extension for captured images
+    unique_filename = f"{uuid.uuid4()}{ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

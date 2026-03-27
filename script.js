@@ -1,4 +1,9 @@
-alert("JS LOADED")
+// Detect API Base URL (default to localhost:8000 if opened as file)
+let API_BASE = window.location.protocol === "file:" 
+  ? "http://127.0.0.1:8000" 
+  : window.location.protocol + "//" + window.location.hostname + ":8000";
+
+console.log("Using API_BASE:", API_BASE);
 
 // Camera access
 let video = document.getElementById("video")
@@ -66,9 +71,6 @@ function capture() {
   if (lon) formData.append("longitude", lon);
 
   alert("API CALL START")
-
-  // Dynamically resolve backend API using port 8000 so it works on any device
-  const API_BASE = window.location.protocol + "//" + window.location.hostname + ":8000"
 
   fetch(API_BASE + "/analyze", {
     method: "POST",
@@ -150,9 +152,6 @@ function uploadAndAnalyze() {
   if (lon) formData.append("longitude", lon);
 
   alert("API CALL START FOR UPLOAD");
-
-  // Dynamically resolve backend API using port 8000 so it works on any device
-  const API_BASE = window.location.protocol + "//" + window.location.hostname + ":8000";
 
   fetch(API_BASE + "/analyze", {
     method: "POST",
